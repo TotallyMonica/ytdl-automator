@@ -18,5 +18,5 @@ python3 download.py [--urls {File with URLs}] [--cookies {File with cookies}] [-
 
 
 ## Todo:
- - Move to yt-dlp for faster downloads
+ - ~~Move to yt-dlp for faster downloads~~ Done 1/31/2023
  - Bulk download from within tool instead of just arguments
