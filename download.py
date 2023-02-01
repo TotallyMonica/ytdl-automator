@@ -17,9 +17,9 @@ def download(link, output, cookies=None):
     if not output['is_dir']:
         ydl_opts['outtmpl'] = output['path']
     elif output['path'][-1] == "/" or output['path'][-1] == "\\":
-        ydl_opts['outtmpl'] = output['path'].replace("\\", "/") + "%(title)s - %(id)s.%(ext)s"
+        ydl_opts['outtmpl'] = output['path'].replace("\\", "/") + "%(title)s - s%(episode)se%(episode_number)02d.%(ext)s"
     else:
-        ydl_opts['outtmpl'] = output['path'].replace("\\", "/") + "/%(title)s - %(id)s.%(ext)s"
+        ydl_opts['outtmpl'] = output['path'].replace("\\", "/") + "/%(title)s - s%(episode)se%(episode_number)02d.%(ext)s"
     
     if cookies:
         ydl_opts['cookiefile'] = cookies
@@ -51,21 +51,37 @@ def auto(filename, output, cookies):
         for line in filp:
             videos.append(line)
     
+    for i in range(len(videos)):
+        videos[i] = problematic_url(videos[i])
+    
     download(videos, output, cookies)
 
-def manual_auto():    
-    outfile = '/mnt/containers/TV Shows/Game Changer/'
-
-    output = {
-        'path': outfile,
-        'is_dir': os.path.isdir(outfile),
-        'exists': os.path.exists(outfile)
+def problematic_url(url):
+    WEBSITES = {
+        'historyvault': {
+            'domains': ["https://www.historyvault.com", "https://watch.historyvault.com", "https://historyvault.com"],
+            'fix':     "{}/full-special"
+        }
     }
+    match = ""
 
-    video_list = '/mnt/containers/TV Shows/Game Changer/VideoList.txt'
-    cookies = '/home/mhanson/cookies.txt'
+    for site in WEBSITES:
+        if not match:
+            for domain in WEBSITES[site]['domains']:
+                    if url.startswith(domain):
+                        match = site
+                        break
 
-    auto(video_list, output, cookies)
+        else:
+            break
+    
+    if match:
+        if url.endswith(WEBSITES[match]['fix']):
+            return url
+        else:
+            return WEBSITES[match]['fix'].replace("{}", url)
+    else:
+        return url
 
 def main():
     output = {}
@@ -107,8 +123,6 @@ def main():
             'AutoFile': "VideoList.txt"
         }
     }
-
-    manual_auto()
 
     # Check if there is an argument provided
     if len(sys.argv) != 1:
@@ -273,6 +287,9 @@ def main():
                     pass
                 else:
                     raise FileExistsError("Output file exists.")
+            
+            # Check the link in the problematic URLs
+            url = problematic_url(url)
             
             print(f"Downloading...")
             download([url], output, cookies)
